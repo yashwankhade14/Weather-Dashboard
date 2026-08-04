@@ -13,6 +13,7 @@ let windSpeed = document.querySelector("#wind-speed");
 let pressure = document.querySelector("#pressure");
 let visibility = document.querySelector("#visibility");
 let uvIndex = document.querySelector("#uv-index");
+let hourlyList = document.querySelector(".hourly-list");
 searchForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     let getInput = searchInput.value.trim();
@@ -53,21 +54,72 @@ searchForm.addEventListener("submit", async (event) => {
     }
 
     feelsLike.innerHTML = `${data.main.feels_like}&deg;C`;
-    humidity.innerHTML =`${data.main.humidity}%`;
-    windSpeed.innerHTML =`${(data.wind.speed)*3.6}km/h`;
-    pressure.innerHTML =`${data.main.pressure}hpa`;
-    visibility.innerHTML =`${data.visibility/1000}km`;
-    uvIndex.innerHTML =`${data.main.humidity}`;
+    humidity.innerHTML = `${data.main.humidity}%`;
+    windSpeed.innerHTML = `${(data.wind.speed) * 3.6}km/h`;
+    pressure.innerHTML = `${data.main.pressure}hpa`;
+    visibility.innerHTML = `${data.visibility / 1000}km`;
+    // uvIndex.innerHTML =`${data.main.humidity}`;
 
+    const apiKey2 = "d2df6b20b1964e2bb52130357260308";
+    let urlAPI2 = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey2}&q=${getInput}&days=1`;
+    let response2 = await fetch(urlAPI2);
+    let data2 = await response2.json();
+    // console.log(data2.forecast.forecastday[0].hour[23].time);
+    // let end=0;
+    hourlyList.innerHTML = "";
+    let currentHour = date.getHours();
+    for (let i = currentHour; i < currentHour + 6; i++) {
 
-    console.log(data);
-    console.log(date.getDate());
-    console.log(date.getMonth());
-    console.log(date.getFullYear());
-    console.log(date.getTime());
-    console.log(date.getHours());
-    console.log(date.getMinutes());
-    console.log(date.toLocaleTimeString());
+        let am_pm = "AM";
+        let hour = i;
+
+        if (i == 12) {
+            am_pm = "PM";
+        }
+        else if (i == 0) {
+            hour = 12;
+        }
+        else if (i > 12) {
+            hour = i - 12;
+            am_pm = "PM";
+        }
+
+        // 1000 → Sunny / Clear
+        // 1003 → Partly cloudy
+        // 1006 → Cloudy
+        // 1009 → Overcast
+        // 1030 → Mist
+        // 1063 → Patchy rain nearby
+        // 1183 → Light rain
+        // 1189 → Moderate rain
+        // 1195 → Heavy rain
+        // 1273 → Thunder with rain
+        let code = data2.forecast.forecastday[0].hour[i].condition.code;
+        let weatherIcon = "";
+
+        if (code == 1000) {
+            weatherIcon = `<i class="fa-solid fa-sun"></i>`;
+        }
+        else if (code == 1003) {
+            weatherIcon = `<i class="fa-solid fa-cloud-sun"></i>`;
+        }
+        else if (code == 1006 || code == 1009) {
+            weatherIcon = `<i class="fa-solid fa-cloud"></i>`;
+        }
+        else if (code == 1063 || code == 1183 || code == 1189 || code == 1195) {
+            weatherIcon = `<i class="fa-solid fa-cloud-rain"></i>`;
+        }
+        hourlyList.innerHTML +=
+            `<article class="hour-card">
+              <p id="hour-one-time">${hour} ${am_pm}</p>
+              ${weatherIcon}
+              <strong id="hour-one-temp">${data2.forecast.forecastday[0].hour[i].temp_c}&deg;C</strong>
+        </article>`
+    }
+    // end++
+
+    // console.log(date.getHours())
+    // console.log(data2.forecast.forecastday[0].hour[i].condition.text);
 
 
 })
