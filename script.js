@@ -14,87 +14,152 @@ let pressure = document.querySelector("#pressure");
 let visibility = document.querySelector("#visibility");
 let uvIndex = document.querySelector("#uv-index");
 let hourlyList = document.querySelector(".hourly-list");
+let airQualityIndex = document.querySelector("#air-quality-index");
+let airQualityStatus = document.querySelector("#air-quality-status");
+let airQualityMessage = document.querySelector("#air-quality-message");
+let daysForcast = document.querySelector(".forecast-grid");
+let sunriseTime = document.querySelector("#sunrise-time");
+let sunsetTime = document.querySelector("#sunset-time");
+let heroCard = document.querySelector(".hero-card");
+let errorMessage = document.querySelector(".error-message");
+let dashboard = document.querySelector(".dashboard-section");
+let airCard = document.querySelector(".air-card");
+let sunGrid = document.querySelector(".sun-grid");
 searchForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     let getInput = searchInput.value.trim();
     if (getInput.length == 0) {
-        console.log("please fill the search");
+        errorMessage.innerHTML = `
+            <h1>Please enter a city name</h1>
+            <p>Search for a city to see the weather.</p>
+        `;
+
+        errorMessage.style.display = "block";
+
+        heroCard.style.display = "none";
+        dashboard.style.display = "none";
+        airCard.style.display = "none";
+        sunGrid.style.display = "none";
+        hourlyList.style.display = "none";
+        daysForcast.style.display = "none";
         return;
     }
-    const apiKey = "ece578f39219f5eaac5614212171bac7";
-    let urlAPI = `https://api.openweathermap.org/data/2.5/weather?q=${getInput}&appid=${apiKey}&units=metric`;
+    const apiKey = "d2df6b20b1964e2bb52130357260308";
+    let urlAPI = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${getInput}&days=5&aqi=yes`;
 
     let response = await fetch(urlAPI);
+
+    if (!response.ok) {
+
+        errorMessage.innerHTML = `
+            <h1>City not found</h1>
+            <p>Please check the spelling and try again.</p>
+        `;
+
+        errorMessage.style.display = "block";
+
+        heroCard.style.display = "none";
+        dashboard.style.display = "none";
+        airCard.style.display = "none";
+        sunGrid.style.display = "none";
+        hourlyList.style.display = "none";
+        daysForcast.style.display = "none";
+        return;
+    }
+
+    errorMessage.style.display = "none";
+
+    heroCard.style.display = "block";
+    dashboard.style.display = "block";
+    airCard.style.display = "block";
+    sunGrid.style.display = "grid";
+    hourlyList.style.display = "block";
+    daysForcast.style.display = "grid";
+
+
     let data = await response.json();
-    let date = new Date(data.dt * 1000);
-    let weather = data.weather[0].main;
+    let date = new Date(data.location.localtime);
     let day = date.toLocaleDateString("en-US", {
         weekday: "long",
         day: "numeric",
         month: "long",
         year: "numeric"
     });
-    cityName.textContent = `${data.name}`;
-    currentTemp.innerHTML = `${data.main.temp}&deg;C`;
-    weatherDescription.textContent = `${data.weather[0].main}`;
+    cityName.textContent = data.location.name;
+    currentTemp.innerHTML = `${data.current.temp_c}&deg;C`;
+    weatherDescription.textContent = data.current.condition.text;
     localTime.textContent = date.toLocaleTimeString();
-    countryCode.textContent = `${data.sys.country}`;
-    currentDate.textContent = `${day}`
-    if (weather === "Clear") {
-        weatherSymbol.innerHTML = `<i class="fa-solid fa-sun"></i>`;
+    countryCode.textContent = data.location.country;
+    currentDate.textContent = `${day}`;
+    let code = data.current.condition.code;
+    let weatherIcon = "";
+
+    if (code == 1000) {
+        weatherIcon = `<i class="fa-solid fa-sun"></i>`;
     }
-    else if (weather === "Clouds") {
-        weatherSymbol.innerHTML = `<i class="fa-solid fa-cloud"></i>`
+    else if (code == 1003) {
+        weatherIcon = `<i class="fa-solid fa-cloud-sun"></i>`;
     }
-    else if (weather === "Rain") {
-        weatherSymbol.innerHTML = `<i class="fa-solid fa-cloud-rain"></i>`
+    else if (code == 1006 || code == 1009) {
+        weatherIcon = `<i class="fa-solid fa-cloud"></i>`;
     }
-    else if (weather === "Thunderstorm") {
-        weatherSymbol.innerHTML = `<i class="fa-solid fa-bolt"></i>`
+    else if (code == 1030) {
+        weatherIcon = `<i class="fa-solid fa-smog"></i>`;
+    }
+    else if (code == 1063 || code == 1183 || code == 1189 || code == 1195) {
+        weatherIcon = `<i class="fa-solid fa-cloud-rain"></i>`;
+    }
+    else if (code == 1210 || code == 1213 || code == 1216 || code == 1219 || code == 1222 || code == 1225) {
+        weatherIcon = `<i class="fa-regular fa-snowflake"></i>`;
+    }
+    else if (code == 1273 || code == 1276 || code == 1279 || code == 1282) {
+        weatherIcon = `<i class="fa-solid fa-cloud-bolt"></i>`;
+    }
+    else {
+        weatherIcon = `<i class="fa-solid fa-cloud"></i>`;
     }
 
-    feelsLike.innerHTML = `${data.main.feels_like}&deg;C`;
-    humidity.innerHTML = `${data.main.humidity}%`;
-    windSpeed.innerHTML = `${(data.wind.speed) * 3.6}km/h`;
-    pressure.innerHTML = `${data.main.pressure}hpa`;
-    visibility.innerHTML = `${data.visibility / 1000}km`;
-    // uvIndex.innerHTML =`${data.main.humidity}`;
+    weatherSymbol.innerHTML = weatherIcon;
 
-    const apiKey2 = "d2df6b20b1964e2bb52130357260308";
-    let urlAPI2 = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey2}&q=${getInput}&days=1`;
-    let response2 = await fetch(urlAPI2);
-    let data2 = await response2.json();
-    // console.log(data2.forecast.forecastday[0].hour[23].time);
-    // let end=0;
-    hourlyList.innerHTML = "";
+    feelsLike.innerHTML = `${data.current.feelslike_c}&deg;C`;
+    humidity.innerHTML = `${data.current.humidity}%`;
+    windSpeed.innerHTML = `${data.current.wind_kph}km/h`;
+    pressure.innerHTML = `${data.current.pressure_mb}hpa`;
+    visibility.innerHTML = `${data.current.vis_km}km`;
+    uvIndex.textContent = data.current.uv;
     let currentHour = date.getHours();
+
+    hourlyList.innerHTML = "";
+
     for (let i = currentHour; i < currentHour + 6; i++) {
 
         let am_pm = "AM";
-        let hour = i;
+        
 
-        if (i == 12) {
+        let hourIndex = i;
+        let forecastdayIndex = 0;
+
+        // Handle crossing midnight
+        if (i >= 24) {
+            hourIndex = i - 24;
+            forecastdayIndex = 1;
+        }
+        let hour = hourIndex;
+
+        // Convert to 12-hour format
+        if (hour == 12) {
             am_pm = "PM";
         }
-        else if (i == 0) {
+        else if (hour == 0) {
             hour = 12;
         }
-        else if (i > 12) {
-            hour = i - 12;
+        else if (hour > 12) {
+            hour = hour - 12;
             am_pm = "PM";
         }
 
-        // 1000 → Sunny / Clear
-        // 1003 → Partly cloudy
-        // 1006 → Cloudy
-        // 1009 → Overcast
-        // 1030 → Mist
-        // 1063 → Patchy rain nearby
-        // 1183 → Light rain
-        // 1189 → Moderate rain
-        // 1195 → Heavy rain
-        // 1273 → Thunder with rain
-        let code = data2.forecast.forecastday[0].hour[i].condition.code;
+        let code = data.forecast.forecastday[forecastdayIndex].hour[hourIndex].condition.code;
+
         let weatherIcon = "";
 
         if (code == 1000) {
@@ -106,20 +171,112 @@ searchForm.addEventListener("submit", async (event) => {
         else if (code == 1006 || code == 1009) {
             weatherIcon = `<i class="fa-solid fa-cloud"></i>`;
         }
+        else if (code == 1030) {
+            weatherIcon = `<i class="fa-solid fa-smog"></i>`;
+        }
         else if (code == 1063 || code == 1183 || code == 1189 || code == 1195) {
             weatherIcon = `<i class="fa-solid fa-cloud-rain"></i>`;
         }
-        hourlyList.innerHTML +=
-            `<article class="hour-card">
-              <p id="hour-one-time">${hour} ${am_pm}</p>
-              ${weatherIcon}
-              <strong id="hour-one-temp">${data2.forecast.forecastday[0].hour[i].temp_c}&deg;C</strong>
-        </article>`
+        else if (code == 1210 || code == 1213 || code == 1216 || code == 1219 || code == 1222 || code == 1225) {
+            weatherIcon = `<i class="fa-regular fa-snowflake"></i>`;
+        }
+        else if (code == 1273 || code == 1276 || code == 1279 || code == 1282) {
+            weatherIcon = `<i class="fa-solid fa-cloud-bolt"></i>`;
+        }
+        else {
+            weatherIcon = `<i class="fa-solid fa-cloud"></i>`;
+        }
+
+        hourlyList.innerHTML += `
+        <article class="hour-card">
+            <p id="hour-one-time">${hour} ${am_pm}</p>
+            ${weatherIcon}
+            <strong id="hour-one-temp">
+                ${data.forecast.forecastday[forecastdayIndex].hour[hourIndex].temp_c}&deg;C
+            </strong>
+        </article>
+    `;
     }
-    // end++
 
-    // console.log(date.getHours())
-    // console.log(data2.forecast.forecastday[0].hour[i].condition.text);
+let airQuality = data.current.air_quality['us-epa-index'];
+airQualityIndex.textContent = `${airQuality}`;
+
+if (airQuality == 1) {
+    airQualityIndex.style.color = "#16a34a";
+    airQualityIndex.style.background = "rgba(22, 163, 74, 0.14)";
+    airQualityMessage.textContent = "Air quality is excellent. Perfect for outdoor activities.";
+    airQualityStatus.textContent = "Good"
+} else if (airQuality == 2) {
+    airQualityIndex.style.color = "#EAB308";
+    airQualityIndex.style.background = "rgba(234, 179, 8, 0.14)";
+    airQualityMessage.textContent = "Air quality is acceptable for most people.";
+    airQualityStatus.textContent = "Moderate";
+} else if (airQuality == 3) {
+    airQualityIndex.style.color = "#F97316";
+    airQualityIndex.style.background = "rgba(249, 115, 22, 0.14)";
+    airQualityMessage.textContent = "Sensitive people should reduce prolonged outdoor activity.";
+    airQualityStatus.textContent = "Unhealthy for Sensitive Groups";
+} else if (airQuality == 4) {
+    airQualityIndex.style.color = "#DC2626";
+    airQualityIndex.style.background = "rgba(220, 38, 38, 0.14)";
+    airQualityMessage.textContent = "Air quality is unhealthy. Limit outdoor exposure.";
+    airQualityStatus.textContent = "Unhealthy"
+} else if (airQuality == 5) {
+    airQualityIndex.style.color = "#9333EA";
+    airQualityIndex.style.background = "rgba(147, 51, 234, 0.14)";
+    airQualityMessage.textContent = "Air quality is very unhealthy. Avoid prolonged outdoor activities.";
+    airQualityStatus.textContent = "Very Unhealthy";
+} else {
+    airQualityIndex.style.color = "#7F1D1D";
+    airQualityIndex.style.background = "rgba(127, 29, 29, 0.14)";
+    airQualityMessage.textContent = "Hazardous air quality. Stay indoors whenever possible.";
+    airQualityStatus.textContent = "Hazardous";
+}
+
+daysForcast.innerHTML = "";
+data.forecast.forecastday.forEach((day, i) => {
+    let date2 = new Date(day.date);
+    let weekday2 = date2.toLocaleDateString("en-US", { weekday: "short" });
+    let code = day.day.condition.code;
+    let maxtemp = day.day.maxtemp_c;
+    let mintemp = day.day.mintemp_c;
+    let weatherIcon = "";
+
+    if (code == 1000) {
+        weatherIcon = `<i class="fa-solid fa-sun"></i>`;
+    }
+    else if (code == 1003) {
+        weatherIcon = `<i class="fa-solid fa-cloud-sun"></i>`;
+    }
+    else if (code == 1006 || code == 1009) {
+        weatherIcon = `<i class="fa-solid fa-cloud"></i>`;
+    }
+    else if (code == 1030) {
+        weatherIcon = `<i class="fa-solid fa-smog"></i>`;
+    }
+    else if (code == 1063 || code == 1183 || code == 1189 || code == 1195) {
+        weatherIcon = `<i class="fa-solid fa-cloud-rain"></i>`;
+    }
+    else if (code == 1210 || code == 1213 || code == 1216 || code == 1219 || code == 1222 || code == 1225) {
+        weatherIcon = `<i class="fa-regular fa-snowflake"></i>`;
+    }
+    else if (code == 1273 || code == 1276 || code == 1279 || code == 1282) {
+        weatherIcon = `<i class="fa-solid fa-cloud-bolt"></i>`;
+    }
+    else {
+        weatherIcon = `<i class="fa-solid fa-cloud"></i>`;
+    }
+    daysForcast.innerHTML +=
+        `<article class="forecast-card">
+            <p id="forecast-day-one">${weekday2}</p>
+            ${weatherIcon}
+            <strong id="forecast-temp-one">${maxtemp}&deg; / ${mintemp}&deg;</strong>
+            <span id="forecast-condition-one">${day.day.condition.text}</span>
+          </article>`
+
+});
+sunriseTime.textContent = data.forecast.forecastday[0].astro.sunrise;
+sunsetTime.textContent = data.forecast.forecastday[0].astro.sunset;
 
 
-})
+});
