@@ -69,11 +69,11 @@ searchForm.addEventListener("submit", async (event) => {
 
     errorMessage.style.display = "none";
 
-    heroCard.style.display = "block";
+    heroCard.style.display = "flex";
     dashboard.style.display = "block";
     airCard.style.display = "block";
     sunGrid.style.display = "grid";
-    hourlyList.style.display = "block";
+    hourlyList.style.display = "grid";
     daysForcast.style.display = "grid";
 
 
